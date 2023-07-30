@@ -1,5 +1,5 @@
 # DotGenerate
-The purpose of this package is to forget about implementations and let the AI do them instead through code Source Generators
+The purpose of this package is to forget about implementations and let the AI do them instead through code Source Generators. RIght now the project does make use of the OpenAI API, but it can be developed to be used with other LLMs 
 
 ### Getting Started
 
@@ -35,6 +35,13 @@ public interface IExample
 	/// <returns></returns>
 	public int Multiply(int x, int y);
 }
+```
+
+Afterwards an implementation will be automatically generated for that interface with suffix "_AIGenerated" and can be used like so:
+
+```csharp
+var example = new IExample_AIGenerated();
+Console.WriteLine(example.Multiply(2, 3));
 ```
 
 ### Donation

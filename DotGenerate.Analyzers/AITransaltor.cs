@@ -67,42 +67,42 @@ namespace DotGenerate.Analyzers
 				PresencePenalty = 0,
 				FrequencyPenalty = 0,
 				Messages = new List<ChatMessage>
+				{
+					new ChatMessage
 					{
-						new ChatMessage
-						{
-							Name = this.Name,
-							Content = content,
-						}
-					},
+						Name = this.Name,
+						Content = content,
+					}
+				},
 				Functions = new List<FunctionMessage>
-					 {
-						 new FunctionMessage
-						 {
-							 Name = "SerializeResponseToValidJson",
-							 Description = "Serialize the Method Response to the appropiate representation",
-							 Parameters = new Parameters
-							 {
-								 Type = "object",
-								 Properties = new Dictionary<string, Property>
-								 {
-									 { "id",
-										 new Property
-										 {
-											 Type = "integer",
-											 Description = "Id matching the request Id originally coupled with the request"
-										 }
-									 },
-									 {
-										 "bodyText", new Property
-										 {
-											 Type = "string",
-											 Description = "Raw implementation written as text (without signature), but also accounting for indentation"
-										 }
-									 }
-								 }
-							 }
-						 }
-					 }
+				{
+					new FunctionMessage
+					{
+						Name = "SerializeResponseToValidJson",
+						Description = "Serialize the Method Response to the appropiate representation",
+						Parameters = new Parameters
+						{
+							Type = "object",
+							Properties = new Dictionary<string, Property>
+							{
+								{ "id",
+									new Property
+									{
+										Type = "integer",
+										Description = "Id matching the request Id originally coupled with the request"
+									}
+								},
+								{
+									"bodyText", new Property
+									{
+										Type = "string",
+										Description = "Raw implementation written as text (without signature), but also accounting for indentation"
+									}
+								}
+							}
+						}
+					}
+				}
 			};
 
 			var resultAsString = await HttpRequest(this.Url, HttpMethod.Post, chatRequest).ConfigureAwait(false);
