@@ -16,7 +16,7 @@ Add the following to your csproj file
 
 ### Actual usage
 
-Create any interface where you annotate it with ```csharp [AIGenerated]``` attribute and then write a description for the methods you want to be generated inside xml summary tags.
+Create any interface where you annotate it with ```[AIGenerated]``` attribute and then write a description for the methods you want to be generated inside xml summary tags.
 
 Example:
 

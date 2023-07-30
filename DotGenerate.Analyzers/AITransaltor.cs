@@ -27,7 +27,7 @@ namespace DotGenerate.Analyzers
 			 $"We will communicate only in json structure where I will send you my methods structure metadata in json format and your implementation response has to respect that as well. All my messages will be independent from one another so please do not remember anything between messages." +
 			 $"The structure will be the following: {RequestJson} and {ResponseJson}. You have to write only the responses and you can use of the functions I provided, but in the end I expect a valid json. Now the real request jsons are: ";
 
-		public string Name { get; set; } = "Compiler2";
+		public string Name { get; set; } = "Compiler";
 
 		private string Url { get => "https://api.openai.com/v1/chat/completions"; }
 
@@ -51,85 +51,88 @@ namespace DotGenerate.Analyzers
 		private static string ResponseJson => @"
 {
     ""ReqId"": 1, ""//same id that matches the request of this response""
-    ""Body"": ""Raw implementation written as text (without signature). Do not format indentation and keep it on one line""
+    ""Body"": ""Raw implementation written as text (with signature). Do not format indentation and keep it on one line""
 }";
 
-		public async Task<Dictionary<ClassPromptRequest, ClassPromptResponse>> GetResponseFor(IEnumerable<ClassPromptRequest> codeRequests)
+		public async Task<ClassPromptResponse> GetResponseFor(ClassPromptRequest codeRequest)
 		{
-			var jsons = codeRequests.Select(r => r.Serialize()).ToList();
-			var jsonSuffix = string.Join("\r\n", jsons);
-			var content = string.Concat(this.PrefixPersona, this.PrefixContext, jsonSuffix);
+			var methodResponses = new List<CodePromptResponse>();
 
-			var chatRequest = new ChatRequest
+			foreach (var method in codeRequest.MethodRequests)
 			{
-				MaxTokens = 2048,
-				Temperature = 0.1,
-				PresencePenalty = 0,
-				FrequencyPenalty = 0,
-				Messages = new List<ChatMessage>
+				var json = method.Serialize();
+				var content = string.Concat(this.PrefixPersona, this.PrefixContext, json);
+
+				var chatRequest = new ChatRequest
 				{
-					new ChatMessage
+					MaxTokens = 1024,
+					Temperature = 0.1,
+					PresencePenalty = 0,
+					FrequencyPenalty = 0,
+					Messages = new List<ChatMessage>
 					{
-						Name = this.Name,
-						Content = content,
-					}
-				},
-				Functions = new List<FunctionMessage>
-				{
-					new FunctionMessage
-					{
-						Name = "SerializeResponseToValidJson",
-						Description = "Serialize the Method Response to the appropiate representation",
-						Parameters = new Parameters
+						new ChatMessage
 						{
-							Type = "object",
-							Properties = new Dictionary<string, Property>
+							Name = this.Name,
+							Content = content,
+						}
+					},
+					Functions = new List<FunctionMessage>
+					{
+						new FunctionMessage
+						{
+							Name = "SerializeResponseToValidJson",
+							Description = "Serialize the Method Response to the appropriate representation",
+							Parameters = new Parameters
 							{
-								{ "id",
-									new Property
-									{
-										Type = "integer",
-										Description = "Id matching the request Id originally coupled with the request"
-									}
-								},
+								Type = "object",
+								Properties = new Dictionary<string, Property>
 								{
-									"bodyText", new Property
+									{ "id",
+										new Property
+										{
+											Type = "integer",
+											Description = "Id matching the request Id originally coupled with the request"
+										}
+									},
 									{
-										Type = "string",
-										Description = "Raw implementation written as text (without signature), but also accounting for indentation"
+										"bodyText", new Property
+										{
+											Type = "string",
+											Description = "Raw implementation written as text (with full signature), but also accounting for indentation"
+										}
 									}
 								}
 							}
 						}
 					}
-				}
-			};
+				};
 
-			var resultAsString = await HttpRequest(this.Url, HttpMethod.Post, chatRequest).ConfigureAwait(false);
-			var chatResult = JsonConvert.DeserializeObject<ChatResult>(resultAsString);
+				var resultAsString = await HttpRequest(this.Url, HttpMethod.Post, chatRequest).ConfigureAwait(false);
+				var chatResult = JsonConvert.DeserializeObject<ChatResult>(resultAsString);
 
-			var functionResults = chatResult.FunctionCallResults;
-			var methodResult = new CodePromptResponse
-			{
-				Id = int.Parse(functionResults["id"].ToString()),
-				Body = functionResults["bodyText"].ToString()
-			};
+				var functionResults = chatResult.FunctionCallResults;
 
-			//TODO: update here
-			var results = new Dictionary<ClassPromptRequest, ClassPromptResponse>();
+				var body = functionResults["bodyText"].ToString();
+				var responseId = int.Parse(functionResults["id"].ToString());
 
-			var firstClass = codeRequests.ElementAt(0);
-			var firstResponse = new ClassPromptResponse
-			{
-				MethodResponses = new List<CodePromptResponse>
+				var response = new CodePromptResponse
 				{
-					methodResult,
-				}
+					Id = responseId,
+					Body = body.StartsWith("public") ? body : $"{method.CodeSignature.FullName} {{ {body} }}"
+				};
+
+				methodResponses.Add(response);
+			}
+
+			var classResponse = new ClassPromptResponse
+			{
+				Id = codeRequest.ReqId,
+				Body = $"{codeRequest.CodeSignature.ClassName}\r\n {{ \r\n {string.Join("", methodResponses.Select(m => $"\r\n{m.Body}\r\n"))} \r\n }}", 
+				MethodResponses = methodResponses,
 			};
 
-			results.Add(firstClass, firstResponse);
-
-			return results;
+			return classResponse;
 		}
 
 		private HttpClient GetClient()
@@ -147,19 +150,18 @@ namespace DotGenerate.Analyzers
 		{
 			var client = GetClient();
 
-			HttpResponseMessage response = null;
 			string resultAsString = null;
 			var req = new HttpRequestMessage(verb, url);
 
 			if (postData != null)
 			{
-				var jsonContent = JsonConvert.SerializeObject(postData, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
-				var stringContent = new StringContent(jsonContent, UnicodeEncoding.UTF8, "application/json");
+				var jsonContent = JsonConvert.SerializeObject(postData, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+				var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
 				req.Content = stringContent;
 			}
 
-			response = await client.SendAsync(req, HttpCompletionOption.ResponseContentRead);
+			var response = await client.SendAsync(req, HttpCompletionOption.ResponseContentRead);
 			string errorMessage = null;
 
 			try

@@ -16,5 +16,10 @@ namespace DotGenerate.Client
 		/// <param name="y"></param>
 		/// <returns></returns>
 		public int Multiply(int x, int y);
+
+		/// <summary>
+		/// Print X in console
+		/// </summary>
+		public void PrintX();
 	}
 }

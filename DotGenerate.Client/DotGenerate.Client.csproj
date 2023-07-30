@@ -8,13 +8,13 @@
   </PropertyGroup>
 	
 	<PropertyGroup>
-		<OpenAIKey>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</OpenAIKey>
+		<OpenAIKey>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</OpenAIKey>
 	</PropertyGroup>
 	
 	<ItemGroup>
 		<CompilerVisibleProperty Include="OpenAIKey"/>
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<ProjectReference Include="..\DotGenerate.Attributes\DotGenerate.Attributes.csproj" />
 	</ItemGroup>

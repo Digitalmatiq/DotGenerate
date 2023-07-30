@@ -51,7 +51,8 @@ namespace DotGenerate.Analyzers
                     {
                         Name = methodName,
                         Parameters = parameters,
-                        ReturnType = returnType
+                        ReturnType = returnType,
+                        FullName = $"public {returnType} {methodName} ({string.Join(",", parameters.Select(p => $"{p.Type} {p.Name}"))})",
                     };
 
                     var methodRequest = new MethodPromptRequest
