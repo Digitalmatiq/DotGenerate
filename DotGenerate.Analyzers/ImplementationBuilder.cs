@@ -12,7 +12,6 @@ namespace DotGenerate.Analyzers
     public class ImplementationBuilder
     {
         private readonly Compilation _compilation;
-        private Dictionary<(INamedTypeSymbol Symbol, string Summary), List<(IMethodSymbol Symbol, string Summary)>> _taggedInterfaceSymbols;
 
         private ImplementationBuilder(Compilation compilation)
         {
@@ -23,11 +22,11 @@ namespace DotGenerate.Analyzers
 
         public List<ClassPromptRequest> GetClassPrompts()
         {
-            this._taggedInterfaceSymbols = this.GetTaggedInterfaceSymbols();
+            var taggedInterfaceSymbols = this.GetTaggedInterfaceSymbols();
             var implementationRequests = new List<ClassPromptRequest>();
             var counter = 0;
             
-            foreach (var pair in this._taggedInterfaceSymbols)
+            foreach (var pair in taggedInterfaceSymbols)
             {
                 var (interfaceSymbol, interfaceSummary) = pair.Key;
                 var methodSymbols = pair.Value;
@@ -79,6 +78,7 @@ namespace DotGenerate.Analyzers
                     CodeSignature = classSignature,
                     MethodRequests = methodRequests,
                 };
+
                 implementationRequests.Add(classRequest);
             }
 

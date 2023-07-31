@@ -8,11 +8,11 @@
   </PropertyGroup>
 	
 	<PropertyGroup>
-		<OpenAIKey>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</OpenAIKey>
+		<OpenAIKey>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</OpenAIKey>
 	</PropertyGroup>
 	
 	<ItemGroup>
-		<CompilerVisibleProperty Include="OpenAIKey"/>
+		<CompilerVisibleProperty Include="OpenAIKey" />
 	</ItemGroup>
 
 	<ItemGroup>

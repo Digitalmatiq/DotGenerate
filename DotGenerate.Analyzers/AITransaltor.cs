@@ -1,4 +1,5 @@
-﻿using DotGenerate.Analyzers.Models.Dtos;
+﻿using DotGenerate.Analyzers.Models;
+using DotGenerate.Analyzers.Models.Dtos;
 using DotGenerate.Analyzers.Models.Prompts;
 using Newtonsoft.Json;
 using System;
@@ -51,14 +52,14 @@ namespace DotGenerate.Analyzers
 		private static string ResponseJson => @"
 {
     ""ReqId"": 1, ""//same id that matches the request of this response""
-    ""Body"": ""Raw implementation written as text (with signature). Do not format indentation and keep it on one line"",
+    ""Body"": ""Raw implementation written as text (with signature). Account for indentation as well"",
 	 ""Namespaces"": ""All the required namespaces for the types found in this method""
 }";
 
 		public async Task<ClassPromptResponse> GetResponseFor(ClassPromptRequest codeRequest)
 		{
 			var methodResponses = new List<CodePromptResponse>();
-			var requiredNamespaces = new HashSet<string>();
+			var usingNamespaces = new HashSet<string>();
 
 			foreach (var method in codeRequest.MethodRequests)
 			{
@@ -142,15 +143,16 @@ namespace DotGenerate.Analyzers
 				methodResponses.Add(response);
 
 				foreach (var ns in namespaces)
-					requiredNamespaces.Add(SanitizeNamespace(ns));
+					usingNamespaces.Add(SanitizeNamespace(ns));
 			}
 
 			var classResponse = new ClassPromptResponse
 			{
 				Id = codeRequest.ReqId,
-				Body = $"{codeRequest.CodeSignature.ClassName}\r\n {{ \r\n {string.Join("", methodResponses.Select(m => $"\r\n{m.Body}\r\n"))} \r\n }}", 
+				Body = $"{codeRequest.CodeSignature.ClassName}{FormattingConstants.NewLine}{{{FormattingConstants.NewLine}{string.Join("", methodResponses.Select(m => $"{FormattingConstants.NewLine}{m.Body}{FormattingConstants.NewLine}"))}{FormattingConstants.NewLine}}}", 
 				MethodResponses = methodResponses,
-				Namespaces = requiredNamespaces.ToList()
+				MainNamespace = $"namespace {codeRequest.CodeSignature.Namespace};{FormattingConstants.NewLine}",
+				UsingNamespaces = usingNamespaces.ToList()
 			};
 
 			return classResponse;

@@ -21,10 +21,12 @@ namespace DotGenerate.Analyzers.Models.Prompts
 	{
 		public int Id { get; set; }
 
-		public List<string> Namespaces { get; set; }
+		public string MainNamespace { get; set; }
+
+		public List<string> UsingNamespaces { get; set; }
 
 		public string Body { get; set; }
 
-		public string Source { get => $"{string.Join("", this.Namespaces.Select(ns => $"\r\n{ns}\r\n"))} {this.Body}"; }
+		public string Source { get => $"{string.Join("", this.UsingNamespaces.Select(ns => $"{FormattingConstants.NewLine}{ns}{FormattingConstants.NewLine}"))}{FormattingConstants.NewLine}{this.MainNamespace}{FormattingConstants.NewLine}{this.Body}"; }
 	}
 }
