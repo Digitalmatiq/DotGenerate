@@ -5,11 +5,11 @@
 	  <TargetFramework>net7.0</TargetFramework>
 	  <ImplicitUsings>enable</ImplicitUsings>
 	  <Nullable>enable</Nullable>
-	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
-	
+
 	<PropertyGroup>
-		<OpenAIKey>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</OpenAIKey>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<OpenAIKey>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</OpenAIKey>
 	</PropertyGroup>
 	
 	<ItemGroup>

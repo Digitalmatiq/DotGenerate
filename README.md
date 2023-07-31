@@ -6,6 +6,7 @@ The purpose of this package is to forget about implementations and let the AI do
 Add the following to your csproj file
 ```xml
 <ItemGroup>
+	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	<CompilerVisibleProperty Include="OpenAIKey"/>
 </ItemGroup>
 
