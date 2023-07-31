@@ -1,5 +1,7 @@
 ﻿using DotGenerate.Analyzers.Models.CodeParts;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DotGenerate.Analyzers.Models.Prompts
 {
@@ -19,6 +21,10 @@ namespace DotGenerate.Analyzers.Models.Prompts
 	{
 		public int Id { get; set; }
 
+		public List<string> Namespaces { get; set; }
+
 		public string Body { get; set; }
+
+		public string Source { get => $"{string.Join("", this.Namespaces.Select(ns => $"\r\n{ns}\r\n"))} {this.Body}"; }
 	}
 }

@@ -25,7 +25,7 @@ namespace DotGenerate.Analyzers
 			foreach (var prompt in classRequestPrompts)
 			{
 				var responsePrompt = this._transaltor.GetResponseFor(prompt).GetAwaiter().GetResult();
-				context.AddSource(prompt.CodeSignature.ClassFile, SourceText.From(responsePrompt.Body, Encoding.UTF8));
+				context.AddSource(prompt.CodeSignature.ClassFile, SourceText.From(responsePrompt.Source, Encoding.UTF8));
 			}
 		}
 

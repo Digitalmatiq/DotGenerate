@@ -21,5 +21,13 @@ namespace DotGenerate.Client
 		/// Print X in console
 		/// </summary>
 		public void PrintX();
+
+		/// <summary>
+		/// Function should calculate the conjugate of a complex number where number
+		/// </summary>
+		/// <param name="realPart"></param>
+		/// <param name="imaginaryPart"></param>
+		/// <returns></returns>
+		public (decimal, decimal) CalculateComplexNumberConjugate(decimal realPart, decimal imaginaryPart);
 	}
 }

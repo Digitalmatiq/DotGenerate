@@ -51,12 +51,14 @@ namespace DotGenerate.Analyzers
 		private static string ResponseJson => @"
 {
     ""ReqId"": 1, ""//same id that matches the request of this response""
-    ""Body"": ""Raw implementation written as text (with signature). Do not format indentation and keep it on one line""
+    ""Body"": ""Raw implementation written as text (with signature). Do not format indentation and keep it on one line"",
+	 ""Namespaces"": ""All the required namespaces for the types found in this method""
 }";
 
 		public async Task<ClassPromptResponse> GetResponseFor(ClassPromptRequest codeRequest)
 		{
 			var methodResponses = new List<CodePromptResponse>();
+			var requiredNamespaces = new HashSet<string>();
 
 			foreach (var method in codeRequest.MethodRequests)
 			{
@@ -88,7 +90,8 @@ namespace DotGenerate.Analyzers
 								Type = "object",
 								Properties = new Dictionary<string, Property>
 								{
-									{ "id",
+									{ 
+										"id",
 										new Property
 										{
 											Type = "integer",
@@ -100,6 +103,17 @@ namespace DotGenerate.Analyzers
 										{
 											Type = "string",
 											Description = "Raw implementation written as text (with full signature), but also accounting for indentation"
+										}
+									},
+									{
+										"namespaces", new Property
+										{
+											Type = "array",
+											Items = new Property.ArrayItem
+											{
+												Type = "string",
+											},
+											Description = "All the namespaces required by this method in a 1d string array"
 										}
 									}
 								}
@@ -113,6 +127,9 @@ namespace DotGenerate.Analyzers
 
 				var functionResults = chatResult.FunctionCallResults;
 
+				var nsJson = functionResults["namespaces"].ToString().TrimStart('{').TrimEnd('}');
+				var namespaces = JsonConvert.DeserializeObject<string[]>(nsJson); 
+
 				var body = functionResults["bodyText"].ToString();
 				var responseId = int.Parse(functionResults["id"].ToString());
 
@@ -123,6 +140,9 @@ namespace DotGenerate.Analyzers
 				};
 
 				methodResponses.Add(response);
+
+				foreach (var ns in namespaces)
+					requiredNamespaces.Add(SanitizeNamespace(ns));
 			}
 
 			var classResponse = new ClassPromptResponse
@@ -130,9 +150,18 @@ namespace DotGenerate.Analyzers
 				Id = codeRequest.ReqId,
 				Body = $"{codeRequest.CodeSignature.ClassName}\r\n {{ \r\n {string.Join("", methodResponses.Select(m => $"\r\n{m.Body}\r\n"))} \r\n }}", 
 				MethodResponses = methodResponses,
+				Namespaces = requiredNamespaces.ToList()
 			};
 
 			return classResponse;
+		}
+
+		private static string SanitizeNamespace(string ns)
+		{
+			ns = ns.StartsWith("using") ? ns : $"using {ns}";
+			ns = ns.EndsWith(";") ? ns : $"{ns};";
+
+			return ns;
 		}
 
 		private HttpClient GetClient()
