@@ -14,7 +14,7 @@ namespace DotGenerate.Analyzers
 		{
 			var options = context.AnalyzerConfigOptions.GlobalOptions;
 			if (options.TryGetValue("build_property.OpenAIKey", out var key))
-				this._transaltor = new AITransaltor(key);
+				this._transaltor = new AITransaltor(key, context);
 			
 			if (this._transaltor == null)
 				return;
@@ -31,12 +31,12 @@ namespace DotGenerate.Analyzers
 
 		public void Initialize(GeneratorInitializationContext context)
 		{
-//#if DEBUG
-//			if (!Debugger.IsAttached)
-//			{
-//				Debugger.Launch(); // launches a debugger
-//			}
-//#endif
+// #if DEBUG
+// 			if (!Debugger.IsAttached)
+// 			{
+// 				Debugger.Launch(); // launches a debugger
+// 			}
+// #endif
 		}
 	}
 }

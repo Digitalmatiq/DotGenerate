@@ -37,7 +37,7 @@ public interface IExample
 }
 ```
 
-Afterwards an implementation will be automatically generated for that interface with suffix "_AIGenerated" and can be used like so:
+Afterwards an implementation will be automatically generated for that interface with suffix "_AIGenerated" under ```SameNamespace.AIGenerated``` and can be used like so:
 
 ```csharp
 var example = new IExample_AIGenerated();

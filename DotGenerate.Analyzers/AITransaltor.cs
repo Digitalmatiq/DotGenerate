@@ -8,16 +8,20 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
 
 namespace DotGenerate.Analyzers
 {
 	public class AITransaltor
 	{
 		private const string UserAgent = "dotgenerator/dotnet_openai_api";
-		private string _key;
 
-		public AITransaltor(string key)
+		private readonly GeneratorExecutionContext _context;
+		private readonly string _key;
+
+		public AITransaltor(string key, GeneratorExecutionContext context)
 		{
+			this._context = context;
 			this._key = key;
 		}
 
@@ -123,27 +127,53 @@ namespace DotGenerate.Analyzers
 					}
 				};
 
+				var diagnostic = Diagnostic.Create(new DiagnosticDescriptor(
+						id: this.GetHashCode().ToString(),
+						title: "MethodRequest",
+						messageFormat: "{0}",
+						category: "AISourceGenerator",
+						DiagnosticSeverity.Info,
+						isEnabledByDefault: true), 
+					Location.None, $"Sending Request for {method.CodeSignature.Name}");
+				
+				this._context.ReportDiagnostic(diagnostic);
+				
 				var resultAsString = await HttpRequest(this.Url, HttpMethod.Post, chatRequest).ConfigureAwait(false);
-				var chatResult = JsonConvert.DeserializeObject<ChatResult>(resultAsString);
 
-				var functionResults = chatResult.FunctionCallResults;
-
-				var nsJson = functionResults["namespaces"].ToString().TrimStart('{').TrimEnd('}');
-				var namespaces = JsonConvert.DeserializeObject<string[]>(nsJson); 
-
-				var body = functionResults["bodyText"].ToString();
-				var responseId = int.Parse(functionResults["id"].ToString());
-
-				var response = new CodePromptResponse
+				CodePromptResponse response = null;
+				if (resultAsString != null)
 				{
-					Id = responseId,
-					Body = body.StartsWith("public") ? body : $"{method.CodeSignature.FullName} {{ {body} }}"
-				};
+					var chatResult = JsonConvert.DeserializeObject<ChatResult>(resultAsString);
 
+					var functionResults = chatResult.FunctionCallResults;
+
+					var nsJson = functionResults["namespaces"].ToString().TrimStart('{').TrimEnd('}');
+					var namespaces = JsonConvert.DeserializeObject<string[]>(nsJson); 
+
+					var body = functionResults["bodyText"].ToString();
+					var responseId = int.Parse(functionResults["id"].ToString());
+					
+					response = new CodePromptResponse
+					{
+						Id = responseId,
+						Body = body.StartsWith("public") ? body : $"{method.CodeSignature.FullName} {{ {body} }}"
+					};
+					
+					foreach (var ns in namespaces)
+						usingNamespaces.Add(SanitizeNamespace(ns));
+				}
+				else
+				{
+					response = new CodePromptResponse
+					{
+						Id = codeRequest.ReqId,
+						Body = $"{method.CodeSignature.FullName} {{ throw new AICouldNotGenerateException(); }}"
+					};
+
+					usingNamespaces.Add("DotGenerate.Attributes.Exceptions");
+				}
+				
 				methodResponses.Add(response);
-
-				foreach (var ns in namespaces)
-					usingNamespaces.Add(SanitizeNamespace(ns));
 			}
 
 			var classResponse = new ClassPromptResponse
@@ -151,7 +181,7 @@ namespace DotGenerate.Analyzers
 				Id = codeRequest.ReqId,
 				Body = $"{codeRequest.CodeSignature.ClassName}{FormattingConstants.NewLine}{{{FormattingConstants.NewLine}{string.Join("", methodResponses.Select(m => $"{FormattingConstants.NewLine}{m.Body}{FormattingConstants.NewLine}"))}{FormattingConstants.NewLine}}}", 
 				MethodResponses = methodResponses,
-				MainNamespace = $"namespace {codeRequest.CodeSignature.Namespace};{FormattingConstants.NewLine}",
+				MainNamespace = $"namespace {codeRequest.CodeSignature.Namespace}.AIGenerated;{FormattingConstants.NewLine}",
 				UsingNamespaces = usingNamespaces.ToList()
 			};
 
@@ -193,7 +223,6 @@ namespace DotGenerate.Analyzers
 			}
 
 			var response = await client.SendAsync(req, HttpCompletionOption.ResponseContentRead);
-			string errorMessage = null;
 
 			try
 			{
@@ -201,7 +230,17 @@ namespace DotGenerate.Analyzers
 			}
 			catch (Exception e)
 			{
-				errorMessage = e.Message;
+				var diagnostic = Diagnostic.Create(
+					new DiagnosticDescriptor(
+						id: this.GetHashCode().ToString(),
+						title: "HttpError",
+						messageFormat: e.Message,
+						category: "AISourceGenerator",
+						DiagnosticSeverity.Warning,
+						isEnabledByDefault: true), 
+					Location.None, "Error while sending request");
+				
+				this._context.ReportDiagnostic(diagnostic);
 			}
 			finally
 			{
@@ -209,7 +248,7 @@ namespace DotGenerate.Analyzers
 			}
 
 			if (!response.IsSuccessStatusCode)
-				throw new HttpRequestException(errorMessage);
+				return null;
 
 			return resultAsString;
 		}

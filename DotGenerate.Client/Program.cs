@@ -1,4 +1,6 @@
-﻿namespace DotGenerate.Client
+﻿using DotGenerate.Client.AIGenerated;
+
+namespace DotGenerate.Client
 {
 	public static class Program
 	{

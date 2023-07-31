@@ -1,12 +1,9 @@
-﻿
-using DotGenerate.Attributes;
-
-namespace DotGenerate.Client
+﻿namespace DotGenerate.Client
 {
 	/// <summary>
 	/// This interface will be automatically implemented by AI
 	/// </summary>
-	[AIGenerated]
+	[Attributes.AIGenerated]
 	public interface IExample
 	{
 		/// <summary>
