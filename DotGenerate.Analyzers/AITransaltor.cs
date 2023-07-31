@@ -128,7 +128,7 @@ namespace DotGenerate.Analyzers
 				};
 
 				var diagnostic = Diagnostic.Create(new DiagnosticDescriptor(
-						id: this.GetHashCode().ToString(),
+						id: "AI0001",
 						title: "MethodRequest",
 						messageFormat: "{0}",
 						category: "AISourceGenerator",
@@ -232,7 +232,7 @@ namespace DotGenerate.Analyzers
 			{
 				var diagnostic = Diagnostic.Create(
 					new DiagnosticDescriptor(
-						id: this.GetHashCode().ToString(),
+						id: "AI0001",
 						title: "HttpError",
 						messageFormat: e.Message,
 						category: "AISourceGenerator",

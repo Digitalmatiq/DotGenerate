@@ -5,7 +5,7 @@ using System.Text;
 
 namespace DotGenerate.Analyzers
 {
-	[Generator]
+	[Generator(LanguageNames.CSharp)]
 	public class AISourceGenerator : ISourceGenerator
 	{
 		private AITransaltor _transaltor;
@@ -34,7 +34,7 @@ namespace DotGenerate.Analyzers
 // #if DEBUG
 // 			if (!Debugger.IsAttached)
 // 			{
-// 				Debugger.Launch(); // launches a debugger
+// 				Debugger.Launch();
 // 			}
 // #endif
 		}

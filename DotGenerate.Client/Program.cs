@@ -1,4 +1,5 @@
-﻿using DotGenerate.Client.AIGenerated;
+﻿
+using DotGenerate.Client.AIGenerated;
 
 namespace DotGenerate.Client
 {

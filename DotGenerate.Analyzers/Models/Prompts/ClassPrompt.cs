@@ -19,6 +19,6 @@ namespace DotGenerate.Analyzers.Models.Prompts
 
 		public string ClassName => $"public class {this.Name}_AIGenerated : {this.FullName}";
 
-		public string ClassFile => $"{this.Name}_AIGenerated.cs";
+		public string ClassFile => $"{this.Name}_AIGenerated.g.cs";
 	}
 }
